@@ -1,0 +1,1234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wilton's Power-Up Progress Tracker</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.12.0/dist/framer-motion.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        #root {
+            width: 100%;
+            max-width: 800px;
+        }
+        
+        /* Container */
+        .tracker-container {
+            background: white;
+            border-radius: 24px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            border: 1px solid #e5e7eb;
+        }
+        
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .stars-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0.1;
+            pointer-events: none;
+        }
+        
+        .star {
+            position: absolute;
+            font-size: 24px;
+            color: white;
+        }
+        
+        .header h1 {
+            font-size: 32px;
+            font-weight: 800;
+            margin-bottom: 8px;
+            position: relative;
+            z-index: 2;
+        }
+        
+        .header p {
+            font-size: 16px;
+            opacity: 0.9;
+            position: relative;
+            z-index: 2;
+        }
+        
+        .streak-badge {
+            background: linear-gradient(135deg, #f6ad55 0%, #ed8936 100%);
+            padding: 8px 16px;
+            border-radius: 20px;
+            display: inline-flex;
+            align-items: center;
+            margin-top: 12px;
+            font-weight: 600;
+            box-shadow: 0 4px 12px rgba(237, 137, 54, 0.3);
+        }
+        
+        /* Day Selector */
+        .day-selector {
+            display: flex;
+            background: #f3f4f6;
+            padding: 12px;
+            overflow-x: auto;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        
+        .day-button {
+            flex: 1;
+            min-width: 70px;
+            padding: 12px 8px;
+            border-radius: 12px;
+            border: none;
+            font-weight: 700;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin: 0 4px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .day-button.active {
+            background: white;
+            color: #6366f1;
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2);
+        }
+        
+        .day-button:not(.active) {
+            background: transparent;
+            color: #9ca3af;
+        }
+        
+        .day-button:not(.active):hover {
+            background: rgba(255, 255, 255, 0.7);
+            color: #6b7280;
+        }
+        
+        /* Stats */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            padding: 20px;
+            background: white;
+        }
+        
+        .stat-card {
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            border-radius: 16px;
+            padding: 16px;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+        }
+        
+        .stat-title {
+            display: flex;
+            align-items: center;
+            font-size: 12px;
+            font-weight: 700;
+            color: #64748b;
+            margin-bottom: 8px;
+        }
+        
+        .stat-value {
+            font-size: 24px;
+            font-weight: 800;
+            color: #1e293b;
+        }
+        
+        /* Progress Bar */
+        .progress-section {
+            padding: 20px 24px 0;
+        }
+        
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            font-weight: 700;
+            color: #475569;
+            font-size: 14px;
+        }
+        
+        .progress-bar {
+            height: 20px;
+            width: 100%;
+            background: #f1f5f9;
+            border-radius: 10px;
+            overflow: hidden;
+            border: 1px solid #e2e8f0;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #f6ad55 0%, #ed8936 100%);
+            border-radius: 10px;
+            transition: width 0.5s ease;
+        }
+        
+        .reward-message {
+            margin-top: 16px;
+            padding: 12px;
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            border-radius: 12px;
+            text-align: center;
+            font-weight: 600;
+            color: #92400e;
+            border: 1px solid #fbbf24;
+            font-size: 14px;
+        }
+        
+        /* Task List */
+        .task-list {
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        
+        .task-item {
+            display: flex;
+            align-items: center;
+            padding: 20px;
+            border-radius: 20px;
+            border: 2px solid;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            background: white;
+        }
+        
+        .task-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+        }
+        
+        .task-item.completed {
+            background: #f8fafc;
+            opacity: 0.8;
+        }
+        
+        .task-icon {
+            width: 56px;
+            height: 56px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 20px;
+            font-size: 24px;
+            background: white;
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+        
+        .task-details {
+            flex: 1;
+        }
+        
+        .task-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 4px;
+        }
+        
+        .task-title.completed {
+            color: #94a3b8;
+            text-decoration: line-through;
+        }
+        
+        .task-subtitle {
+            font-size: 14px;
+            color: #64748b;
+            margin-bottom: 8px;
+        }
+        
+        .task-timer {
+            display: flex;
+            align-items: center;
+            font-size: 12px;
+            color: #64748b;
+            margin-top: 4px;
+        }
+        
+        .task-check {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            border: 2px solid;
+            transition: all 0.3s ease;
+        }
+        
+        .task-check.completed {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            border-color: #10b981;
+        }
+        
+        /* Weekly Summary */
+        .weekly-summary {
+            margin: 20px 24px;
+            padding: 20px;
+            background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%);
+            border-radius: 20px;
+            border: 1px solid #c7d2fe;
+        }
+        
+        .weekly-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+        
+        .weekly-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: #3730a3;
+        }
+        
+        .weekly-stats {
+            font-size: 14px;
+            font-weight: 700;
+            color: #4f46e5;
+        }
+        
+        .days-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        
+        .day-cell {
+            text-align: center;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+        
+        .day-cell:hover {
+            transform: scale(1.05);
+        }
+        
+        .day-score {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 8px;
+            font-weight: 700;
+            font-size: 14px;
+            border: 2px solid;
+        }
+        
+        .day-name {
+            font-size: 12px;
+            font-weight: 600;
+            color: #4f46e5;
+        }
+        
+        /* Completion Message */
+        .completion-message {
+            margin: 20px 24px;
+            padding: 30px;
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            border-radius: 20px;
+            text-align: center;
+            border: 2px solid #fbbf24;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .confetti {
+            position: absolute;
+            font-size: 20px;
+            z-index: 1;
+        }
+        
+        .completion-icon {
+            font-size: 48px;
+            color: #d97706;
+            margin-bottom: 16px;
+            position: relative;
+            z-index: 2;
+        }
+        
+        .completion-title {
+            font-size: 24px;
+            font-weight: 800;
+            color: #92400e;
+            margin-bottom: 8px;
+            position: relative;
+            z-index: 2;
+        }
+        
+        .completion-text {
+            font-size: 16px;
+            color: #92400e;
+            position: relative;
+            z-index: 2;
+        }
+        
+        /* Controls */
+        .controls {
+            padding: 20px 24px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        
+        .control-button {
+            flex: 1;
+            min-width: 120px;
+            padding: 16px;
+            border-radius: 14px;
+            border: none;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .control-button.primary {
+            background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+            color: white;
+        }
+        
+        .control-button.warning {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            color: white;
+        }
+        
+        .control-button.danger {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            color: white;
+        }
+        
+        .control-button:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+        }
+        
+        /* Footer */
+        .footer {
+            padding: 20px 24px;
+            text-align: center;
+            color: #64748b;
+            font-size: 14px;
+            border-top: 1px solid #e5e7eb;
+            background: #f8fafc;
+        }
+        
+        .footer-stats {
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            margin-top: 12px;
+            font-size: 12px;
+        }
+        
+        /* Responsive */
+        @media (max-width: 640px) {
+            .header h1 {
+                font-size: 24px;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr;
+                gap: 12px;
+            }
+            
+            .controls {
+                flex-direction: column;
+            }
+            
+            .control-button {
+                width: 100%;
+            }
+            
+            .footer-stats {
+                flex-direction: column;
+                gap: 8px;
+            }
+            
+            .task-item {
+                padding: 16px;
+            }
+            
+            .task-icon {
+                width: 48px;
+                height: 48px;
+                margin-right: 16px;
+                font-size: 20px;
+            }
+        }
+        
+        /* Animations */
+        @keyframes confettiFall {
+            0% {
+                transform: translateY(-100px) rotate(0deg);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(500px) rotate(360deg);
+                opacity: 0;
+            }
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+        
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+        
+        /* Task Colors */
+        .task-sport { background: #ffedd5; border-color: #fed7aa; }
+        .task-sport .task-icon { color: #ea580c; }
+        .task-sport .task-check { border-color: #ea580c; color: #ea580c; }
+        
+        .task-piano { background: #f3e8ff; border-color: #e9d5ff; }
+        .task-piano .task-icon { color: #9333ea; }
+        .task-piano .task-check { border-color: #9333ea; color: #9333ea; }
+        
+        .task-english { background: #dbeafe; border-color: #bfdbfe; }
+        .task-english .task-icon { color: #2563eb; }
+        .task-english .task-check { border-color: #2563eb; color: #2563eb; }
+        
+        .task-chinese { background: #fee2e2; border-color: #fecaca; }
+        .task-chinese .task-icon { color: #dc2626; }
+        .task-chinese .task-check { border-color: #dc2626; color: #dc2626; }
+        
+        .task-math { background: #dcfce7; border-color: #bbf7d0; }
+        .task-math .task-icon { color: #16a34a; }
+        .task-math .task-check { border-color: #16a34a; color: #16a34a; }
+        
+        /* Day Score Colors */
+        .score-excellent { background: #d1fae5; border-color: #a7f3d0; color: #065f46; }
+        .score-good { background: #fef3c7; border-color: #fde68a; color: #92400e; }
+        .score-poor { background: #f3f4f6; border-color: #e5e7eb; color: #6b7280; }
+        
+        /* Timer progress */
+        .timer-bar {
+            height: 4px;
+            width: 100%;
+            background: #e2e8f0;
+            border-radius: 2px;
+            margin-top: 4px;
+            overflow: hidden;
+        }
+        
+        .timer-fill {
+            height: 100%;
+            border-radius: 2px;
+            transition: width 0.3s ease;
+        }
+        
+        .timer-sport .timer-fill { background: #ea580c; }
+        .timer-piano .timer-fill { background: #9333ea; }
+        .timer-english .timer-fill { background: #2563eb; }
+        .timer-chinese .timer-fill { background: #dc2626; }
+        .timer-math .timer-fill { background: #16a34a; }
+        
+        .live-badge {
+            background: #ef4444;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 10px;
+            font-weight: 700;
+            margin-left: 8px;
+            animation: pulse 1.5s infinite;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useMemo, useCallback } = React;
+        
+        const WiltonTracker = () => {
+            // Helper functions
+            const getTodayIndex = () => {
+                const today = new Date().getDay();
+                return (today >= 1 && today <= 5) ? today : 1;
+            };
+            
+            const yesterday = () => {
+                const date = new Date();
+                date.setDate(date.getDate() - 1);
+                return date.toDateString();
+            };
+            
+            // Days configuration
+            const days = [
+                { id: 1, name: 'Monday' },
+                { id: 2, name: 'Tuesday' },
+                { id: 3, name: 'Wednesday' },
+                { id: 4, name: 'Thursday' },
+                { id: 5, name: 'Friday' },
+            ];
+            
+            // Tasks configuration
+            const tasks = [
+                { id: 'sport', label: 'Sports Time', sub: 'Jump, Run, or Play Ball', icon: '🏃', color: 'task-sport', targetTime: 30, timerClass: 'timer-sport' },
+                { id: 'piano', label: 'Piano Practice', sub: 'Scales & Songs', icon: '🎹', color: 'task-piano', targetTime: 20, timerClass: 'timer-piano' },
+                { id: 'english', label: 'English Reading', sub: 'Books & Phonics', icon: '📚', color: 'task-english', targetTime: 20, timerClass: 'timer-english' },
+                { id: 'chinese', label: 'Chinese Study', sub: 'Characters & Speaking', icon: '🀄', color: 'task-chinese', targetTime: 20, timerClass: 'timer-chinese' },
+                { id: 'math', label: 'Math Fun', sub: 'Numbers & Logic', icon: '🧮', color: 'task-math', targetTime: 15, timerClass: 'timer-math' },
+            ];
+            
+            // Rewards configuration
+            const rewards = [
+                { completed: 1, reward: "🌟 One star earned!", emoji: "🌟" },
+                { completed: 3, reward: "⭐⭐⭐ Great progress!", emoji: "⭐⭐⭐" },
+                { completed: 5, reward: "🏆 Superstar! All tasks done!", emoji: "🏆" }
+            ];
+            
+            // State initialization
+            const [currentDay, setCurrentDay] = useState(getTodayIndex());
+            const [progress, setProgress] = useState(() => {
+                const saved = localStorage.getItem('wilton-progress');
+                if (saved) {
+                    try {
+                        return JSON.parse(saved);
+                    } catch (e) {
+                        console.error('Error parsing saved progress:', e);
+                    }
+                }
+                
+                const defaultState = {};
+                [1, 2, 3, 4, 5].forEach(day => {
+                    defaultState[day] = {};
+                    tasks.forEach(task => {
+                        defaultState[day][task.id] = false;
+                    });
+                });
+                return defaultState;
+            });
+            
+            const [streak, setStreak] = useState(() => {
+                const saved = localStorage.getItem('wilton-streak');
+                return saved ? parseInt(saved) : 0;
+            });
+            
+            const [timeSpent, setTimeSpent] = useState(() => {
+                const saved = localStorage.getItem('wilton-time');
+                return saved ? JSON.parse(saved) : {};
+            });
+            
+            const [activeTimers, setActiveTimers] = useState({});
+            const [confetti, setConfetti] = useState([]);
+            
+            // Current progress calculations
+            const currentProgress = progress[currentDay];
+            const completedCount = useMemo(() => {
+                return Object.values(currentProgress).filter(Boolean).length;
+            }, [currentProgress]);
+            
+            const totalTasks = tasks.length;
+            const isAllComplete = completedCount === totalTasks;
+            const progressPercentage = (completedCount / totalTasks) * 100;
+            
+            // Weekly calculations
+            const weeklyStats = useMemo(() => {
+                let totalCompleted = 0;
+                let dailyCompletions = {};
+                
+                Object.entries(progress).forEach(([day, tasks]) => {
+                    const completed = Object.values(tasks).filter(Boolean).length;
+                    dailyCompletions[day] = completed;
+                    totalCompleted += completed;
+                });
+                
+                return {
+                    totalCompleted,
+                    dailyCompletions,
+                    weeklyPercentage: (totalCompleted / (totalTasks * 5)) * 100
+                };
+            }, [progress, totalTasks]);
+            
+            // Save to localStorage effects
+            useEffect(() => {
+                localStorage.setItem('wilton-progress', JSON.stringify(progress));
+            }, [progress]);
+            
+            useEffect(() => {
+                localStorage.setItem('wilton-streak', streak.toString());
+            }, [streak]);
+            
+            useEffect(() => {
+                localStorage.setItem('wilton-time', JSON.stringify(timeSpent));
+            }, [timeSpent]);
+            
+            // Streak management effect
+            useEffect(() => {
+                if (isAllComplete) {
+                    const lastCompleted = localStorage.getItem('wilton-last-completed');
+                    const today = new Date().toDateString();
+                    
+                    if (lastCompleted !== today) {
+                        const newStreak = lastCompleted === yesterday() ? streak + 1 : 1;
+                        setStreak(newStreak);
+                        localStorage.setItem('wilton-last-completed', today);
+                        
+                        // Add confetti for streak increase
+                        if (newStreak > streak) {
+                            addConfetti();
+                        }
+                    }
+                }
+            }, [isAllComplete, streak]);
+            
+            // Timer functions
+            const startTimer = useCallback((taskId) => {
+                const startTime = Date.now();
+                setActiveTimers(prev => ({
+                    ...prev,
+                    [taskId]: startTime
+                }));
+                localStorage.setItem(`timer-${taskId}-${currentDay}`, startTime.toString());
+            }, [currentDay]);
+            
+            const stopTimer = useCallback((taskId) => {
+                const startTime = activeTimers[taskId] || 
+                    parseInt(localStorage.getItem(`timer-${taskId}-${currentDay}`) || '0');
+                
+                if (startTime) {
+                    const timeSpentMs = Date.now() - startTime;
+                    const timeSpentMin = Math.round(timeSpentMs / 60000);
+                    
+                    setTimeSpent(prev => {
+                        const key = `${currentDay}-${taskId}`;
+                        const newTime = (prev[key] || 0) + timeSpentMin;
+                        return { ...prev, [key]: newTime };
+                    });
+                    
+                    setActiveTimers(prev => {
+                        const newTimers = { ...prev };
+                        delete newTimers[taskId];
+                        return newTimers;
+                    });
+                    
+                    localStorage.removeItem(`timer-${taskId}-${currentDay}`);
+                }
+            }, [activeTimers, currentDay]);
+            
+            // Task toggle with timer support
+            const toggleTask = useCallback((taskId) => {
+                const isCurrentlyActive = activeTimers[taskId];
+                
+                if (!currentProgress[taskId] && !isCurrentlyActive) {
+                    // Starting a new task - start timer
+                    startTimer(taskId);
+                } else if (isCurrentlyActive) {
+                    // Stopping an active timer
+                    stopTimer(taskId);
+                }
+                
+                // Toggle completion state
+                setProgress(prev => ({
+                    ...prev,
+                    [currentDay]: { 
+                        ...prev[currentDay], 
+                        [taskId]: !prev[currentDay][taskId] 
+                    }
+                }));
+                
+                // Add confetti when completing a task
+                if (!currentProgress[taskId] && !isCurrentlyActive) {
+                    setTimeout(() => {
+                        if (completedCount + 1 === totalTasks) {
+                            addConfetti(15);
+                        }
+                    }, 300);
+                }
+            }, [currentProgress, activeTimers, startTimer, stopTimer, currentDay, completedCount, totalTasks]);
+            
+            // Confetti effect
+            const addConfetti = (count = 5) => {
+                const newConfetti = [];
+                for (let i = 0; i < count; i++) {
+                    newConfetti.push({
+                        id: Date.now() + i,
+                        emoji: ['🎉', '✨', '🌟', '🏆', '🎊'][Math.floor(Math.random() * 5)],
+                        left: Math.random() * 100,
+                        delay: Math.random() * 2
+                    });
+                }
+                setConfetti(prev => [...prev, ...newConfetti]);
+                
+                // Remove confetti after animation
+                setTimeout(() => {
+                    setConfetti(prev => prev.filter(c => !newConfetti.some(nc => nc.id === c.id)));
+                }, 5000);
+            };
+            
+            // Reset functions
+            const clearCurrentWeek = () => {
+                if (window.confirm("Reset all progress for this week? This cannot be undone.")) {
+                    const defaultState = {};
+                    [1, 2, 3, 4, 5].forEach(day => {
+                        defaultState[day] = {};
+                        tasks.forEach(task => {
+                            defaultState[day][task.id] = false;
+                        });
+                    });
+                    setProgress(defaultState);
+                    setTimeSpent({});
+                    setStreak(0);
+                    setActiveTimers({});
+                    localStorage.removeItem('wilton-last-completed');
+                }
+            };
+            
+            const resetSingleDay = () => {
+                if (window.confirm(`Reset all tasks for ${days.find(d => d.id === currentDay).name}?`)) {
+                    setProgress(prev => {
+                        const newDayState = {};
+                        tasks.forEach(task => {
+                            newDayState[task.id] = false;
+                        });
+                        return {
+                            ...prev,
+                            [currentDay]: newDayState
+                        };
+                    });
+                    
+                    // Stop any active timers for this day
+                    tasks.forEach(task => {
+                        if (activeTimers[task.id]) {
+                            stopTimer(task.id);
+                        }
+                    });
+                }
+            };
+            
+            // Export/Import functions
+            const exportProgress = () => {
+                const data = {
+                    progress,
+                    streak,
+                    timeSpent,
+                    exportDate: new Date().toISOString(),
+                    version: '1.0'
+                };
+                
+                const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `wilton-progress-${new Date().toLocaleDateString('en-CA')}.json`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            };
+            
+            const importProgress = () => {
+                const input = document.createElement('input');
+                input.type = 'file';
+                input.accept = '.json';
+                
+                input.onchange = (event) => {
+                    const file = event.target.files[0];
+                    if (!file) return;
+                    
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        try {
+                            const imported = JSON.parse(e.target.result);
+                            
+                            // Validate imported data
+                            if (imported.progress && imported.streak !== undefined) {
+                                setProgress(imported.progress);
+                                setStreak(imported.streak);
+                                setTimeSpent(imported.timeSpent || {});
+                                alert('Progress imported successfully!');
+                            } else {
+                                alert('Invalid file format. Please select a valid progress file.');
+                            }
+                        } catch (error) {
+                            alert('Error reading file. Please make sure it is a valid JSON file.');
+                        }
+                    };
+                    reader.readAsText(file);
+                };
+                
+                input.click();
+            };
+            
+            // Current reward calculation
+            const currentReward = useMemo(() => {
+                return rewards
+                    .filter(r => r.completed <= completedCount)
+                    .pop();
+            }, [completedCount]);
+            
+            // Get time spent for specific task
+            const getTaskTimeSpent = useCallback((taskId) => {
+                const key = `${currentDay}-${taskId}`;
+                return timeSpent[key] || 0;
+            }, [timeSpent, currentDay]);
+            
+            // Get total time spent
+            const getTotalTimeSpent = useCallback(() => {
+                return Object.values(timeSpent).reduce((total, time) => total + time, 0);
+            }, [timeSpent]);
+            
+            // Get day score class
+            const getDayScoreClass = (dayId) => {
+                const completed = weeklyStats.dailyCompletions[dayId] || 0;
+                if (completed === totalTasks) return 'score-excellent';
+                if (completed > 0) return 'score-good';
+                return 'score-poor';
+            };
+            
+            // Render stars background
+            const renderStars = () => {
+                const stars = [];
+                for (let i = 0; i < 10; i++) {
+                    stars.push(
+                        <div 
+                            key={i}
+                            className="star"
+                            style={{
+                                top: `${Math.random() * 100}%`,
+                                left: `${Math.random() * 100}%`,
+                                fontSize: `${Math.random() * 20 + 16}px`,
+                                transform: `rotate(${Math.random() * 360}deg)`,
+                                opacity: Math.random() * 0.3 + 0.1
+                            }}
+                        >
+                            ★
+                        </div>
+                    );
+                }
+                return stars;
+            };
+            
+            // Render the component
+            return (
+                <div className="tracker-container">
+                    {/* Header */}
+                    <div className="header">
+                        <div className="stars-bg">
+                            {renderStars()}
+                        </div>
+                        <h1>Wilton's Power-Up Plan</h1>
+                        <p>Complete tasks to unlock stars! ✨</p>
+                        
+                        {streak > 2 && (
+                            <div className="streak-badge">
+                                <i className="fas fa-fire" style={{marginRight: '8px'}}></i>
+                                {streak} Day Streak!
+                            </div>
+                        )}
+                    </div>
+                    
+                    {/* Day Selector */}
+                    <div className="day-selector">
+                        {days.map(day => (
+                            <button
+                                key={day.id}
+                                onClick={() => setCurrentDay(day.id)}
+                                className={`day-button ${currentDay === day.id ? 'active' : ''}`}
+                            >
+                                <span>{day.name.substring(0, 3)}</span>
+                                <span style={{fontSize: '11px', marginTop: '4px', opacity: 0.7}}>
+                                    {weeklyStats.dailyCompletions[day.id] || 0}/{totalTasks}
+                                </span>
+                            </button>
+                        ))}
+                    </div>
+                    
+                    {/* Stats Grid */}
+                    <div className="stats-grid">
+                        <div className="stat-card">
+                            <div className="stat-title">
+                                <i className="fas fa-fire" style={{marginRight: '6px', color: '#f59e0b'}}></i>
+                                Day Streak
+                            </div>
+                            <div className="stat-value" style={{color: '#d97706'}}>{streak}</div>
+                        </div>
+                        
+                        <div className="stat-card">
+                            <div className="stat-title">
+                                <i className="fas fa-clock" style={{marginRight: '6px', color: '#10b981'}}></i>
+                                Time Today
+                            </div>
+                            <div className="stat-value" style={{color: '#059669'}}>
+                                {tasks.reduce((total, task) => total + getTaskTimeSpent(task.id), 0)} min
+                            </div>
+                        </div>
+                        
+                        <div className="stat-card">
+                            <div className="stat-title">
+                                <i className="fas fa-star" style={{marginRight: '6px', color: '#8b5cf6'}}></i>
+                                Total Time
+                            </div>
+                            <div className="stat-value" style={{color: '#7c3aed'}}>
+                                {getTotalTimeSpent()} min
+                            </div>
+                        </div>
+                    </div>
+                    
+                    {/* Progress Bar */}
+                    <div className="progress-section">
+                        <div className="progress-header">
+                            <span>
+                                <i className="fas fa-bullseye" style={{marginRight: '6px', color: '#6366f1'}}></i>
+                                {days.find(d => d.id === currentDay).name}'s Progress
+                            </span>
+                            <span>{completedCount} / {totalTasks} Completed</span>
+                        </div>
+                        <div className="progress-bar">
+                            <div 
+                                className="progress-fill" 
+                                style={{width: `${progressPercentage}%`}}
+                            ></div>
+                        </div>
+                        
+                        {currentReward && (
+                            <div className="reward-message">
+                                <span style={{fontSize: '18px', marginRight: '8px'}}>{currentReward.emoji}</span>
+                                {currentReward.reward}
+                            </div>
+                        )}
+                    </div>
+                    
+                    {/* Task List */}
+                    <div className="task-list">
+                        {tasks.map((task) => {
+                            const isCompleted = currentProgress[task.id];
+                            const isActive = activeTimers[task.id];
+                            const timeSpent = getTaskTimeSpent(task.id);
+                            const timePercent = Math.min((timeSpent / task.targetTime) * 100, 100);
+                            
+                            return (
+                                <div
+                                    key={task.id}
+                                    onClick={() => toggleTask(task.id)}
+                                    className={`task-item ${task.color} ${isCompleted ? 'completed' : ''}`}
+                                >
+                                    <div className="task-icon">
+                                        {task.icon}
+                                        {isActive && (
+                                            <div style={{
+                                                position: 'absolute',
+                                                top: '-4px',
+                                                right: '-4px',
+                                                width: '12px',
+                                                height: '12px',
+                                                backgroundColor: '#ef4444',
+                                                borderRadius: '50%',
+                                                animation: 'pulse 1.5s infinite'
+                                            }}></div>
+                                        )}
+                                    </div>
+                                    
+                                    <div className="task-details">
+                                        <div className={`task-title ${isCompleted ? 'completed' : ''}`}>
+                                            {task.label}
+                                        </div>
+                                        <div className="task-subtitle">
+                                            {task.sub}
+                                        </div>
+                                        
+                                        <div className="task-timer">
+                                            <i className="far fa-clock" style={{marginRight: '4px'}}></i>
+                                            <span>{timeSpent} min / {task.targetTime} min</span>
+                                            {isActive && <span className="live-badge">LIVE</span>}
+                                        </div>
+                                        
+                                        {timeSpent > 0 && (
+                                            <div className={`timer-bar ${task.timerClass}`}>
+                                                <div 
+                                                    className="timer-fill" 
+                                                    style={{width: `${timePercent}%`}}
+                                                ></div>
+                                            </div>
+                                        )}
+                                    </div>
+                                    
+                                    <div className={`task-check ${isCompleted ? 'completed' : ''}`}>
+                                        {isCompleted ? '✓' : ''}
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                    
+                    {/* Weekly Summary */}
+                    <div className="weekly-summary">
+                        <div className="weekly-header">
+                            <div className="weekly-title">
+                                <i className="far fa-calendar-alt" style={{marginRight: '8px'}}></i>
+                                Weekly Progress
+                            </div>
+                            <div className="weekly-stats">
+                                {weeklyStats.totalCompleted} / {totalTasks * 5} tasks
+                            </div>
+                        </div>
+                        
+                        <div className="days-grid">
+                            {days.map(day => (
+                                <div 
+                                    key={day.id} 
+                                    className="day-cell"
+                                    onClick={() => setCurrentDay(day.id)}
+                                >
+                                    <div className={`day-score ${getDayScoreClass(day.id)} ${currentDay === day.id ? 'pulse' : ''}`}>
+                                        {weeklyStats.dailyCompletions[day.id] || 0}
+                                    </div>
+                                    <div className="day-name">{day.name.substring(0, 3)}</div>
+                                </div>
+                            ))}
+                        </div>
+                        
+                        <div style={{marginTop: '12px'}}>
+                            <div style={{display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#4f46e5', marginBottom: '4px'}}>
+                                <span>Week Completion</span>
+                                <span>{Math.round(weeklyStats.weeklyPercentage)}%</span>
+                            </div>
+                            <div style={{height: '6px', width: '100%', backgroundColor: '#c7d2fe', borderRadius: '3px', overflow: 'hidden'}}>
+                                <div 
+                                    style={{
+                                        height: '100%',
+                                        width: `${weeklyStats.weeklyPercentage}%`,
+                                        backgroundColor: '#4f46e5',
+                                        borderRadius: '3px',
+                                        transition: 'width 0.5s ease'
+                                    }}
+                                ></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    {/* Completion Message */}
+                    {isAllComplete && (
+                        <div className="completion-message">
+                            {confetti.map(c => (
+                                <div 
+                                    key={c.id}
+                                    className="confetti"
+                                    style={{
+                                        left: `${c.left}%`,
+                                        animation: `confettiFall 5s ease-out ${c.delay}s forwards`,
+                                        fontSize: '24px'
+                                    }}
+                                >
+                                    {c.emoji}
+                                </div>
+                            ))}
+                            
+                            <div className="completion-icon">
+                                <i className="fas fa-trophy"></i>
+                            </div>
+                            <div className="completion-title">Awesome Job, Wilton!</div>
+                            <div className="completion-text">
+                                You finished everything for {days.find(d => d.id === currentDay).name}! 🎉
+                            </div>
+                            <div style={{marginTop: '12px', fontSize: '14px', color: '#92400e'}}>
+                                Total time today: {tasks.reduce((total, task) => total + getTaskTimeSpent(task.id), 0)} minutes
+                            </div>
+                        </div>
+                    )}
+                    
+                    {/* Controls */}
+                    <div className="controls">
+                        <button 
+                            className="control-button primary"
+                            onClick={exportProgress}
+                        >
+                            <i className="fas fa-download" style={{marginRight: '8px'}}></i>
+                            Export Progress
+                        </button>
+                        
+                        <button 
+                            className="control-button primary"
+                            onClick={importProgress}
+                        >
+                            <i className="fas fa-upload" style={{marginRight: '8px'}}></i>
+                            Import Progress
+                        </button>
+                        
+                        <button 
+                            className="control-button warning"
+                            onClick={resetSingleDay}
+                        >
+                            <i className="fas fa-redo" style={{marginRight: '8px'}}></i>
+                            Reset Today
+                        </button>
+                        
+                        <button 
+                            className="control-button danger"
+                            onClick={clearCurrentWeek}
+                        >
+                            <i className="fas fa-trash-alt" style={{marginRight: '8px'}}></i>
+                            Reset Week
+                        </button>
+                    </div>
+                    
+                    {/* Footer */}
+                    <div className="footer">
+                        <div>🌟 Keep up the great work, Wilton! Every task completed is a step toward your goals. 🌟</div>
+                        <div className="footer-stats">
+                            <span>Total Time: {getTotalTimeSpent()} minutes</span>
+                            <span>•</span>
+                            <span>Weekly Progress: {Math.round(weeklyStats.weeklyPercentage)}%</span>
+                            <span>•</span>
+                            <span>Current Streak: {streak} days</span>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+        
+        // Render the app
+        ReactDOM.render(<WiltonTracker />, document.getElementById('root'));
+    </script>
+</body>
+</html>
